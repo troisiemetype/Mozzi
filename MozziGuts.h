@@ -162,8 +162,16 @@ HIFI is not available/not required on Teensy 3.1.
 #define AUDIO_RATE_AS_LSHIFT 14
 #define MICROS_PER_AUDIO_TICK 61 // 1000000 / 16384 = 61.035, ...* 256 = 15625
 #elif AUDIO_RATE == 32768
-#define AUDIO_RATE_AS_LSHIFT 15
+#define AUDIO_RATE_AS_LSHIFT 15  // used in StateVariable, see what to do for Due.
 #define MICROS_PER_AUDIO_TICK 31 // = 1000000 / 32768 = 30.518, ...* 256 = 7812.6
+#elif AUDIO_RATE == 44100
+#define MICROS_PER_AUDIO_TICK 23 // = 1000000 / 44100 = 22.676, ...* 256 = 5805.0
+#elif AUDIO_RATE == 48000
+#define MICROS_PER_AUDIO_TICK 21 // = 1000000 / 48000 = 20.833, ...* 256 = 5333.3
+#elif AUDIO_RATE == 88200
+#define MICROS_PER_AUDIO_TICK 11 // = 1000000 / 88200 = 11.338, ...* 256 = 2902.5
+#elif AUDIO_RATE == 96000
+#define MICROS_PER_AUDIO_TICK 10 // = 1000000 / 96000 = 10.417, ...* 256 = 2666.7
 #endif
 
 
@@ -171,6 +179,8 @@ HIFI is not available/not required on Teensy 3.1.
 #include "AudioConfigTeensy3_12bit.h"
 #elif IS_STM32()
 #include "AudioConfigSTM32.h"
+#elif IS_DUE()
+#include "AudioConfigDue.h"
 #elif IS_AVR()
 #if (AUDIO_MODE == STANDARD)
 #include "AudioConfigStandard9bitPwm.h"

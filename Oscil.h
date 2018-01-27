@@ -19,10 +19,15 @@
 #else
  #include "WProgram.h"
 #endif
+
 #include "MozziGuts.h"
 #include "mozzi_fixmath.h"
-#include <util/atomic.h>
 
+#if IS_DUE()
+#include "utility/DueAtomic.h"
+#else
+#include <util/atomic.h>
+#endif
 
 #ifdef OSCIL_DITHER_PHASE
 #include "mozzi_rand.h"

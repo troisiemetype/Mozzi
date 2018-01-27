@@ -276,6 +276,8 @@ void adc0_isr(void)
 void stm32_adc_eoc_handler()
 #elif IS_AVR()
 ISR(ADC_vect, ISR_BLOCK)
+#elif IS_DUE()
+void fonctionVide()
 #endif
 {
 	if (first)

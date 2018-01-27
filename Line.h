@@ -17,7 +17,12 @@
 #else
  #include "WProgram.h"
 #endif
+
+#if IS_DUE()
+#include "utility/DueAtomic.h"
+#else
 #include <util/atomic.h>
+#endif
 
 /** For linear changes with a minimum of calculation at each step. For instance,
 you can use Line to make an oscillator glide from one frequency to another,

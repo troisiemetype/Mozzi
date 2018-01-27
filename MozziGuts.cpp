@@ -15,12 +15,17 @@
  #include "WProgram.h"
 #endif
 
-#include <util/atomic.h>
 #include "MozziGuts.h"
 #include "mozzi_config.h" // at the top of all MozziGuts and analog files
 #include "mozzi_analog.h"
 #include "CircularBuffer.h"
 //#include "mozzi_utils.h"
+
+#if IS_DUE()
+#include "utility/DueAtomic.h"
+#else
+#include <util/atomic.h>
+#endif
 
 #if IS_AVR()
 #include "TimerZero.h"
@@ -33,10 +38,13 @@
 #elif IS_STM32()
 #include <STM32ADC.h>
 #include "HardwareTimer.h"
+#elif IS_DUE()
+#include "TimerDue.h"
+//#include //ADC
 #endif
 
 
-#if !(F_CPU == 16000000 || F_CPU == 48000000)
+#if !(F_CPU == 16000000 || F_CPU == 48000000 || F_CPU == 84000000)
 #warning "Mozzi has been tested with a cpu clock speed of 16MHz on Arduino and 48MHz on Teensy 3!  Results may vary with other speeds."
 #endif
 
@@ -271,6 +279,8 @@ void audioHook() // 2us excluding updateAudio()
 #elif IS_STM32()
   HardwareTimer audio_update_timer(AUDIO_UPDATE_TIMER);
   HardwareTimer audio_pwm_timer(AUDIO_PWM_TIMER);
+#elif IS_DUE()
+  TimerDue timerSampleRate = TimerDue(0);
 #endif
 
 #if IS_TEENSY3()
@@ -299,6 +309,11 @@ static void pwmAudioOutput()
 #else
 	pwmWrite(AUDIO_CHANNEL_1_PIN, (int)output_buffer.read());
 #endif
+}
+#elif IS_DUE()
+static void dueDacAudioOutput()
+{
+	analogWrite(DAC0, (int)output_buffer.read());
 }
 #endif
 
@@ -333,7 +348,6 @@ static void startAudioStandard()
 #elif MAX_CARRIER_FREQ < (AUDIO_RATE * 3)
 #warning Configured audio resolution may be higher than optimal at the configured audio rate (and the given CPU speed)
 #endif
-
 #if MAX_CARRIER_FREQ < (AUDIO_RATE * 5)
 	// Generate as fast a carrier as possible
 	audio_pwm_timer.setPrescaleFactor(1);
@@ -342,7 +356,11 @@ static void startAudioStandard()
 	audio_pwm_timer.setPrescaleFactor((int) MAX_CARRIER_FREQ / (AUDIO_RATE * 5));
 #endif
 	audio_pwm_timer.setOverflow(1 << AUDIO_BITS_PER_CHANNEL);   // Allocate enough room to write all intended bits
-
+#elif IS_DUE()
+	analogWriteResolution(12);
+	timerSampleRate.initFrequency(AUDIO_RATE);
+	timerSampleRate.attach(dueDacAudioOutput);
+	timerSampleRate.start();
 #endif
 	//backupMozziTimer1(); // // not for arm
 }
@@ -576,6 +594,8 @@ that). */
 IntervalTimer timer0;
 #elif IS_STM32()
 HardwareTimer control_timer(CONTROL_UPDATE_TIMER);
+#elif IS_DUE()
+TimerDue timerControlRate = TimerDue(1);
 #endif
 
 
@@ -598,6 +618,10 @@ static void startControl(unsigned int control_rate_hz)
 	mozzi_TIMSK0 = TIMSK0;
 #elif IS_TEENSY3()
 	timer0.begin(updateControlWithAutoADC, 1000000/control_rate_hz);
+#elif IS_DUE()
+	timerControlRate.initFrequency(control_rate_hz);
+	timerControlRate.attach(updateControlWithAutoADC);
+	timerControlRate.start();
 #else
 	control_timer.pause();
 	control_timer.setPeriod(1000000/control_rate_hz);
@@ -627,8 +651,11 @@ void stopMozzi(){
 #if IS_TEENSY3()
 	timer1.end();
 #elif IS_STM32()
-        audio_update_timer.pause();
-        control_timer.pause();
+    audio_update_timer.pause();
+    control_timer.pause();
+#elif IS_DUE()
+    timerControlRate.stop();
+    timerSampleRate.stop();
 #else
 
     noInterrupts();
