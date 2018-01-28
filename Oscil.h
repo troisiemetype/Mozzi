@@ -33,6 +33,8 @@
 #include "mozzi_rand.h"
 #endif
 
+#include <type_traits>
+
 // fractional bits for oscillator index precision
 #define OSCIL_F_BITS 16
 #define OSCIL_F_BITS_AS_MULTIPLIER 65536
@@ -66,7 +68,7 @@ The usage is:
 char2mozzi.py infilename outfilename tablename samplerate
 */
 //template <unsigned int NUM_TABLE_CELLS, unsigned int UPDATE_RATE, bool DITHER_PHASE=false>
-template <uint16_t NUM_TABLE_CELLS, uint16_t UPDATE_RATE>
+template <uint16_t NUM_TABLE_CELLS, uint16_t UPDATE_RATE, typename T = int8_t>
 class Oscil
 {
 
@@ -77,7 +79,7 @@ public:
 	can be found in the table ".h" file if you are using a table made for
 	Mozzi by the int8_t2mozzi.py python script in Mozzi's python
 	folder.*/
-	Oscil(const int8_t * TABLE_NAME):table(TABLE_NAME)
+	Oscil(const T * TABLE_NAME):table(TABLE_NAME)
 	{}
 
 
@@ -95,7 +97,7 @@ public:
 	@return the next sample.
 	*/
 	inline
-	int8_t next()
+	T next()
 	{
 		incrementPhase();
 		return readTable();
@@ -105,7 +107,7 @@ public:
 	/** Change the sound table which will be played by the Oscil.
 	@param TABLE_NAME is the name of the array in the table ".h" file you're using.
 	*/
-	void setTable(const int8_t * TABLE_NAME)
+	void setTable(const T * TABLE_NAME)
 	{
 		table = TABLE_NAME;
 	}
@@ -166,7 +168,7 @@ public:
 	// FM: cos(angle += (incr + change))
 	// The ratio of deviation to modulation frequency is called the "index of modulation". ( I = d / Fm )
 	inline
-	int8_t phMod(Q15n16 phmod_proportion)
+	T phMod(Q15n16 phmod_proportion)
 	{
 		incrementPhase();
 		return (int8_t)pgm_read_byte_near(table + (((phase_fractional+(phmod_proportion * NUM_TABLE_CELLS))>>OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
@@ -277,7 +279,7 @@ public:
 	@return the sample at the given table index.
 	*/
 	inline
-	int8_t atIndex(unsigned int index)
+	T atIndex(unsigned int index)
 	{
 		return (int8_t)pgm_read_byte_near(table + (index & (NUM_TABLE_CELLS - 1)));
 	}
@@ -338,24 +340,27 @@ static const uint8_t ADJUST_FOR_NUM_TABLE_CELLS = (NUM_TABLE_CELLS<2048) ? 8 : 0
 	/** Returns the current sample.
 	 */
 	inline
-	int8_t readTable()
+//	typename std::enable_if<std::is_same<T, int8_t>::value, T>::type
+	T readTable()
 	{
 #ifdef OSCIL_DITHER_PHASE
-		return (int8_t)pgm_read_byte_near(table + (((phase_fractional + ((int)(xorshift96()>>16))) >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
+		return (T)pgm_read_byte_near(table + (((phase_fractional + ((int)(xorshift96()>>16))) >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
 #else
-		return (int8_t)pgm_read_byte_near(table + ((phase_fractional >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
+		if(sizeof(T) == sizeof(int8_t)){
+			return (T)pgm_read_byte_near(table + ((phase_fractional >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
+		} else if(sizeof(T) == sizeof(int16_t)){
+			return (T)pgm_read_word_near(table + ((phase_fractional >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
+		}
 		//return (int8_t)pgm_read_byte_near(table + (((phase_fractional >> OSCIL_F_BITS) | 1 ) & (NUM_TABLE_CELLS - 1))); odd phase, attempt to reduce frequency spurs in output
 #endif
 	}
-
 
 	unsigned long phase_fractional;
 	volatile unsigned long phase_increment_fractional; // volatile with atomic access because it can
 	// be set in the updateControl() interrupt and
 	// used in updateAudio(), which is outside the
 	// interrupt.
-	const int8_t * table;
-
+	const T * table;
 };
 
 

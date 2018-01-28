@@ -30,7 +30,7 @@ def computeSquare(index, length, depth, iterations):
         if (i % 2) == 0:
             continue
         value += sine(angle * i) / i
-    output = int(value * depth * 0.82 / 2)
+    output = int(value * depth * 0.999999 / 2)
     return output
 
 def computeMamelle(index, length, depth, iterations):
@@ -73,7 +73,7 @@ def computeTriangle(index, length, depth, iterations):
         value += sign * sine(angle * i) / i**2
 
         sign *= -1
-    output = int(value * depth * 0.82 / 2)
+    output = int(value * depth * 0.999999 / 2)
     return output
 
 def computeSawtooth(index, length, depth, iterations):
@@ -85,7 +85,7 @@ def computeSawtooth(index, length, depth, iterations):
     for i in range(1, iterations):
         value += sign * sine(angle * i) / i
         sign *= -1
-    output = int(value * depth * 0.53 / 2)
+    output = int(value * depth * 0.999999 / 2)
     return output
 
 def compute(index, length, depth, iterations):
@@ -102,7 +102,6 @@ def compute(index, length, depth, iterations):
 
     output = int(value * depth * 0.35 / 2)
     return output
-
 
 
 def sine(angle):
@@ -128,32 +127,17 @@ def generate(tablename, tablelength, tabledepth, signed = 1):
     tablename += str(length)
 
     fout = open(os.path.expanduser(filename), "w")
-    fout.write('#ifndef ' + tablename + '_H_' + '\n')
-    fout.write('#define ' + tablename + '_H_' + '\n \n')
-    fout.write('#if ARDUINO >= 100'+'\n')
-    fout.write('#include "Arduino.h"'+'\n')
-    fout.write('#else'+'\n')
-    fout.write('#include "WProgram.h"'+'\n')
-    fout.write('#endif'+'\n')   
-    fout.write('#include <avr/pgmspace.h>'+'\n \n')
-    fout.write('#define ' + tablename + '_NUM_CELLS '+ str(length)+'\n')
-    fout.write('#define ' + tablename + '_SAMPLERATE '+ str(length)+'\n \n')
-    outstring = 'const int'
-    outstring += str(tabledepth)
-    outstring += '_t __attribute__((section(".progmem.data"))) ' + tablename + '_DATA [] = {'
     try:
+        outstring = ''
         for num in range(length):
-##            outstring += str(compute(num, length, depth, 20) + offset) + ", "
-##            outstring += str(computeSawtooth(num, length, depth, 40) + offset) + ", "
+            outstring += str(compute(num, length, depth, 35) + offset) + '\n'
+##            outstring += str(computeSawtooth(num, length, depth, 40) + offset) + ", " + '\n'
 ##            outstring += str(computeTriangle(num, length, depth, 15) + offset) + ", " + '\n'
-            outstring += str(computeSquare(num, length, depth, 42) + offset) + ", "
+##            outstring += str(computeSquare(num, length, depth, 42) + offset) + ", "
 ##            outstring += str(computeSine(num, length, depth) + offset) + ", "
         ##    outstring += str(int(num/(float(length) / float(depth))) + offset) + ", "  ## for saw line, or put your own generating code here
     finally:
-        outstring +=  "};"
-        outstring = textwrap.fill(outstring, 80)
         fout.write(outstring)
-        fout.write('\n \n #endif /* ' + tablename + '_H_ */\n')
         fout.close()
         print "wrote " + filename
 

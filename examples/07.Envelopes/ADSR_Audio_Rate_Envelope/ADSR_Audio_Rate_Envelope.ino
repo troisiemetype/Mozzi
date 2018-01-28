@@ -21,7 +21,7 @@
 
 #define CONTROL_RATE 64
 
-Oscil <8192, AUDIO_RATE> aOscil(SIN8192_DATA);; 
+Oscil <8192, AUDIO_RATE> aOscil(SIN8192_DATA);
 
 // for triggering the envelope
 EventDelay noteDelay;
