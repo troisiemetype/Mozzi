@@ -262,7 +262,11 @@ void audioHook() // 2us excluding updateAudio()
 		output_buffer.write((unsigned int) (audio_out_1 + AUDIO_BIAS));
 		output_buffer2.write((unsigned int) (audio_out_2 + AUDIO_BIAS));
 		#else
+		#if IS_DUE()
+		output_buffer.write((unsigned int) ((updateAudio() << 2) + AUDIO_BIAS));
+		#else
 		output_buffer.write((unsigned int) (updateAudio() + AUDIO_BIAS));
+		#endif
 		#endif
 
 	}
