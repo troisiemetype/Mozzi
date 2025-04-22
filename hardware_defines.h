@@ -94,7 +94,15 @@
 #define IS_ESP32() 0
 #endif
 
-#if !(IS_AVR() || IS_TEENSY3() || IS_TEENSY4() || IS_STM32() || IS_STM32DUINO() || IS_ESP8266() || IS_SAMD21() || IS_ESP32() || IS_RP2040() || IS_MBED() || IS_RENESAS())
+#if (defined(MEGATINYCORE_SERIES))
+#define IS_ATTINY() 1
+#undef IS_AVR
+#define IS_AVR() 0
+#else
+#define IS_ATTINY()	0
+#endif
+
+#if !(IS_AVR() || IS_TEENSY3() || IS_TEENSY4() || IS_STM32() || IS_STM32DUINO() || IS_ESP8266() || IS_SAMD21() || IS_ESP32() || IS_RP2040() || IS_MBED() || IS_RENESAS() || IS_ATTINY())
 #error Your hardware is not supported by Mozzi or not recognized. Edit hardware_defines.h to proceed.
 #endif
 

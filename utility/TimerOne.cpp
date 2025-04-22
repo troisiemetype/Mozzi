@@ -14,7 +14,8 @@
  */
 
 // Added by TB2014 for Mozzi library, to hide code from Teensy 3.1
-#if defined (__AVR__)
+//#if defined (__AVR__)
+#if (defined (__AVR__) && !defined(MEGATINYCORE_SERIES))
  
 #include "TimerOne.h"
 

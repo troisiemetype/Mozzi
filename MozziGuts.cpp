@@ -51,6 +51,8 @@ static void startSecondADCReadOnCurrentChannel();
 #  include "MozziGuts_impl_MBED.hpp"
 #elif (IS_RENESAS())
 #  include "MozziGuts_impl_RENESAS.hpp"
+#elif (IS_ATTINY())
+#  include "MozziGuts_impl_ATTINY.hpp"
 #else
 #  error "Platform not (yet) supported. Check MozziGuts_impl_template.hpp and existing implementations for a blueprint for adding your favorite MCU."
 #endif
